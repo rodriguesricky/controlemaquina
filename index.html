@@ -3,54 +3,51 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Controle Máquinas — Portofino</title>
+<title>Controle de Máquinas — Portofino</title>
+<script src="msal.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
   :root {
-    --bg: #f5f5f3;
+    --header-bg: #1e3d35;
+    --header-border: rgba(255,255,255,0.08);
+    --bg: #f2f3f1;
     --surface: #ffffff;
-    --surface2: #f0efeb;
-    --border: rgba(0,0,0,0.08);
-    --border2: rgba(0,0,0,0.16);
+    --surface2: #f0f2ef;
+    --border: rgba(0,0,0,0.07);
+    --border2: rgba(0,0,0,0.13);
     --text: #1a1a18;
     --muted: #6b6b67;
     --hint: #9a9a95;
-    --accent: #D85A30;
-    --blue: #185FA5;
-    --blue-bg: #E6F1FB;
-    --green: #3B6D11; --green-bg: #EAF3DE;
+    --accent: #1e3d35;
+    --accent2: #2d5c4e;
+    --accent-light: #e8f0ee;
+    --green: #2d6a4f; --green-bg: #d8f3dc;
     --amber: #854F0B; --amber-bg: #FAEEDA;
     --red: #A32D2D;   --red-bg: #FCEBEB;
+    --blue: #185FA5;  --blue-bg: #E6F1FB;
     --gray: #5F5E5A;  --gray-bg: #F1EFE8;
     --radius: 10px; --radius-sm: 6px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1a1a18; --surface: #242422; --surface2: #2e2e2b;
-      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
-      --text: #f0efe9; --muted: #9a9a95; --hint: #6b6b67;
-      --blue: #B5D4F4; --blue-bg: #0C447C;
-      --green: #C0DD97; --green-bg: #27500A;
-      --amber: #FAC775; --amber-bg: #633806;
-      --red: #F7C1C1;   --red-bg: #791F1F;
-      --gray: #D3D1C7;  --gray-bg: #444441;
-    }
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
   /* HEADER */
-  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
-  .header-left { display: flex; align-items: center; gap: 12px; }
-  .logo { width: 34px; height: 34px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
-  .header h1 { font-size: 15px; font-weight: 600; }
-  .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--surface); color: var(--text); cursor: pointer; transition: background 0.15s; }
-  .btn:hover { background: var(--surface2); }
-  .btn svg { width: 14px; height: 14px; flex-shrink: 0; }
-  .btn-primary { background: #0078d4; border-color: #0078d4; color: #fff; }
-  .btn-primary:hover { background: #106ebe; }
-  .last-update { font-size: 11px; color: var(--hint); }
-  .header-right { display: flex; align-items: center; gap: 10px; }
+  .header { background: var(--header-bg); border-bottom: 1px solid var(--header-border); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .hamburger { display: flex; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+  .hamburger span { width: 20px; height: 1.5px; background: rgba(255,255,255,0.7); border-radius: 2px; }
+  .logo-wrap { display: flex; align-items: center; gap: 10px; }
+  .logo { width: 34px; height: 34px; border: 1.5px solid rgba(255,255,255,0.4); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .logo svg { width: 18px; height: 18px; }
+  .header-title { font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.92); letter-spacing: 0.01em; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .user-badge { display: flex; align-items: center; gap: 8px; }
+  .user-name { font-size: 13px; color: rgba(255,255,255,0.75); }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent2); border: 1.5px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #fff; }
+  .btn-refresh { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); cursor: pointer; transition: background 0.15s; }
+  .btn-refresh:hover { background: rgba(255,255,255,0.15); }
+  .btn-refresh svg { width: 13px; height: 13px; }
+  .last-update { font-size: 11px; color: rgba(255,255,255,0.45); }
 
   /* MAIN */
   .main { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
@@ -59,18 +56,20 @@
   .state-box { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 5rem 2rem; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); text-align: center; }
   .state-box h2 { font-size: 17px; font-weight: 600; }
   .state-box p { font-size: 13px; color: var(--muted); line-height: 1.7; max-width: 380px; }
-  .spinner { width: 30px; height: 30px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .spinner { width: 28px; height: 28px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .steps-box { background: var(--surface2); border-radius: var(--radius-sm); padding: 16px 20px; text-align: left; margin-top: 4px; }
+  .steps-box { background: var(--surface2); border-radius: var(--radius-sm); padding: 16px 20px; text-align: left; margin-top: 4px; width: 100%; max-width: 360px; }
   .steps-box p { font-size: 12px; color: var(--muted); line-height: 1.9; }
   .steps-box strong { color: var(--text); }
+  .btn-login { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 10px 22px; border-radius: var(--radius-sm); border: none; background: var(--accent); color: #fff; cursor: pointer; transition: background 0.15s; }
+  .btn-login:hover { background: var(--accent2); }
   .ms-logo { width: 18px; height: 18px; flex-shrink: 0; }
 
   /* METRICS */
   .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 1.25rem; }
   .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 15px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; user-select: none; }
   .metric:hover { border-color: var(--border2); }
-  .metric.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(216,90,48,0.12); }
+  .metric.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(30,61,53,0.1); }
   .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
   .metric-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .metric-value { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; }
@@ -98,10 +97,10 @@
   .table-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--hint); }
   .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 980px; }
-  thead th { background: var(--surface2); color: var(--hint); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 13px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  thead th { background: var(--accent); color: rgba(255,255,255,0.85); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 13px; text-align: left; white-space: nowrap; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
   tbody tr:last-child { border-bottom: none; }
-  tbody tr:hover { background: var(--surface2); }
+  tbody tr:hover { background: var(--accent-light); }
   tbody td { padding: 9px 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
   .mono { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: 11px; }
 
@@ -119,39 +118,45 @@
 
 <div class="header">
   <div class="header-left">
-    <div class="logo">CM</div>
-    <h1>Controle Máquinas</h1>
+    <div class="hamburger"><span></span><span></span><span></span></div>
+    <div class="logo-wrap">
+      <div class="logo">
+        <img src="Box.png" alt="Portofino Logo" style="width:34px;height:34px;border-radius:6px;display:block;" />
+      </div>
+      <span class="header-title">Controle de Máquinas</span>
+    </div>
   </div>
   <div class="header-right">
     <span class="last-update" id="last-update"></span>
-    <button class="btn" onclick="loadData()" id="btn-refresh" style="display:none">
+    <button class="btn-refresh" onclick="loadData()" id="btn-refresh" style="display:none">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2" stroke-linecap="round"/>
         <path d="M12 2v3h-3" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       Atualizar
     </button>
+    <div class="user-badge" id="user-badge" style="display:none">
+      <span class="user-name" id="user-name"></span>
+      <div class="user-avatar" id="user-avatar"></div>
+    </div>
   </div>
 </div>
 
 <div class="main" id="main"></div>
 
-<script src="msal.js"></script>
 <script>
-// ── CONFIG ─────────────────────────────────────────────────────────
-// IMPORTANTE: substitua CLIENT_ID pelo App ID registrado no Azure AD
 const CONFIG = {
-  clientId:  '7f9a8e42-fea2-497a-9762-7892027f1560',
-  authority: 'https://login.microsoftonline.com/97ee49aa-4dd0-49ba-bd71-7a830ef3df48',
+  clientId:    '7f9a8e42-fea2-497a-9762-7892027f1560',
+  authority:   'https://login.microsoftonline.com/97ee49aa-4dd0-49ba-bd71-7a830ef3df48',
   redirectUri: 'https://rodriguesricky.github.io/controlemaquina',
-  siteUrl:   'https://portofinomultifamilyoffice.sharepoint.com/sites/controlemaquinas',
-  listName:  'Controle',
-  scopes:    ['https://portofinomultifamilyoffice.sharepoint.com/AllSites.Read'],
+  siteUrl:     'https://portofinomultifamilyoffice.sharepoint.com/sites/controlemaquinas',
+  listName:    'Controle',
+  scopes:      ['https://portofinomultifamilyoffice.sharepoint.com/AllSites.Read'],
 };
 
 const statusMeta = {
-  'Em uso':          { dot:'#639922', cls:'b-green' },
-  'Ativo':           { dot:'#639922', cls:'b-green' },
+  'Em uso':          { dot:'#2d6a4f', cls:'b-green' },
+  'Ativo':           { dot:'#2d6a4f', cls:'b-green' },
   'Aguardando':      { dot:'#888780', cls:'b-gray'  },
   'Offline':         { dot:'#E24B4A', cls:'b-red'   },
   'Manutenção':      { dot:'#378ADD', cls:'b-blue'  },
@@ -161,14 +166,9 @@ const statusMeta = {
 };
 
 let token = null, allDevices = [], activeStatus = null;
-let chartS = null, chartL = null;
-let msalInstance = null;
-
-// ── MSAL ────────────────────────────────────────────────────────────
-function loadMSAL() { return Promise.resolve(); }
+let chartS = null, chartL = null, msalInstance = null;
 
 async function getToken() {
-  await loadMSAL();
   if (!msalInstance) {
     msalInstance = new msal.PublicClientApplication({
       auth: { clientId: CONFIG.clientId, authority: CONFIG.authority, redirectUri: CONFIG.redirectUri },
@@ -182,10 +182,19 @@ async function getToken() {
     if (acct) return (await msalInstance.acquireTokenSilent({ ...req, account: acct })).accessToken;
   } catch {}
   const resp = await msalInstance.loginPopup(req);
+  setUserBadge(resp.account);
   return (await msalInstance.acquireTokenSilent({ ...req, account: resp.account })).accessToken;
 }
 
-// ── LOGIN ───────────────────────────────────────────────────────────
+function setUserBadge(account) {
+  if (!account) return;
+  const name = account.name || account.username || '';
+  const initials = name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('user-avatar').textContent = initials;
+  document.getElementById('user-badge').style.display = 'flex';
+}
+
 async function login() {
   showLoading('Conectando ao Microsoft 365...');
   try {
@@ -195,7 +204,6 @@ async function login() {
   } catch(e) { showError(e); }
 }
 
-// ── DATA ────────────────────────────────────────────────────────────
 async function loadData() {
   if (!token) return;
   showLoading('Carregando dados do SharePoint...');
@@ -203,18 +211,14 @@ async function loadData() {
     const url = `${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items?$select=Title,AssetID,NF,Localizacao,UsuarioPrimario/Title,Fabricante,Modelo,Serial,Categoria,Status,DataCompra,GarantiaAte,CentroCusto,Fornecedor,Observacoes&$expand=UsuarioPrimario&$top=5000`;
     const r = await fetch(url, { headers: { Accept: 'application/json;odata=nometadata', Authorization: `Bearer ${token}` } });
     if (r.status === 401) { token = await getToken(); return loadData(); }
-    if (!r.ok) {
-      const body = await r.text().catch(() => '');
-      throw new Error(`HTTP ${r.status} — ${r.statusText}\n${body.substring(0,300)}`);
-    }
+    if (!r.ok) { const b = await r.text().catch(()=>''); throw new Error(`HTTP ${r.status}\n${b.substring(0,300)}`); }
     const data = await r.json();
-    if (data.value?.length > 0) console.log('Campos disponíveis:', Object.keys(data.value[0]));
     allDevices = (data.value||[]).map(d => ({
       title:       d.Title||'',
       hostname:    d.AssetID||'',
       nf:          d.NF||'',
       localizacao: d.Localizacao||'',
-      usuario:     d.UsuarioPrimario?.Title || '—',
+      usuario:     d.UsuarioPrimario?.Title||'—',
       fabricante:  d.Fabricante||'',
       modelo:      d.Modelo||'',
       serial:      d.Serial||'',
@@ -231,7 +235,6 @@ async function loadData() {
   } catch(e) { showError(e); }
 }
 
-// ── STATE ───────────────────────────────────────────────────────────
 function showLoading(msg) {
   document.getElementById('main').innerHTML = `<div class="state-box"><div class="spinner"></div><p>${msg}</p></div>`;
 }
@@ -240,12 +243,11 @@ function showError(e) {
   document.getElementById('main').innerHTML = `<div class="state-box">
     <div style="font-size:32px">⚠️</div>
     <h2>Erro ao conectar</h2>
-    <p>${e.message||e}<br><br>Certifique-se de estar logado com a conta corporativa da Portofino e que o App ID do Azure AD está configurado corretamente.</p>
-    <button class="btn btn-primary" onclick="login()">Tentar novamente</button>
+    <p>${e.message||e}</p>
+    <button class="btn-login" onclick="login()">Tentar novamente</button>
   </div>`;
 }
 
-// ── RENDER ──────────────────────────────────────────────────────────
 const today = new Date();
 const daysUntil = s => s ? Math.round((new Date(s) - today) / 86400000) : 9999;
 const badgeCls  = s => (statusMeta[s]||{cls:'b-gray'}).cls;
@@ -355,7 +357,7 @@ function renderCharts(f) {
   const ls=Object.entries(lc).sort((a,b)=>b[1]-a[1]);
   if (chartL) chartL.destroy();
   const clEl=document.getElementById('cL');
-  if (clEl) chartL=new Chart(clEl,{type:'bar',data:{labels:ls.map(s=>s[0]),datasets:[{data:ls.map(s=>s[1]),backgroundColor:'#D85A30',borderRadius:3,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10},stepSize:1}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  if (clEl) chartL=new Chart(clEl,{type:'bar',data:{labels:ls.map(s=>s[0]),datasets:[{data:ls.map(s=>s[1]),backgroundColor:'#1e3d35',borderRadius:3,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10},stepSize:1}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
 }
 
 function renderTable(f) {
@@ -383,12 +385,12 @@ function renderTable(f) {
   }).join('');
 }
 
-// ── INIT ────────────────────────────────────────────────────────────
+// INIT
 document.getElementById('main').innerHTML = `<div class="state-box">
-  <div style="font-size:40px">💻</div>
-  <h2>Controle Máquinas — Portofino</h2>
-  <p>Clique abaixo para entrar com sua conta Microsoft e carregar os dados da lista do SharePoint.</p>
-  <button class="btn btn-primary" onclick="login()">
+  <img src="Box.png" alt="Portofino Logo" style="width:64px;height:64px;border-radius:12px;display:block;" />
+  <h2>Controle de Máquinas</h2>
+  <p>Entre com sua conta Microsoft para acessar o inventário de máquinas da Portofino.</p>
+  <button class="btn-login" onclick="login()">
     <svg class="ms-logo" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
       <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
       <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
@@ -398,13 +400,10 @@ document.getElementById('main').innerHTML = `<div class="state-box">
     Entrar com Microsoft
   </button>
   <div class="steps-box">
-    <p>
-      <strong>Como funciona:</strong><br>
-      1. Clique em "Entrar com Microsoft"<br>
-      2. Faça login com sua conta corporativa da Portofino<br>
-      3. Os dados são carregados direto do SharePoint<br>
-      4. Nenhuma senha é armazenada — usa o token do Microsoft 365
-    </p>
+    <p><strong>Como funciona:</strong><br>
+    1. Entre com sua conta corporativa da Portofino<br>
+    2. Os dados carregam direto do SharePoint<br>
+    3. Use os filtros para navegar pelo inventário</p>
   </div>
 </div>`;
 </script>
