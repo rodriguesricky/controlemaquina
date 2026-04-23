@@ -200,8 +200,8 @@ async function loadData() {
   if (!token) return;
   showLoading('Carregando dados do SharePoint...');
   try {
-    const fields = 'Title,Hostname,NF,Localizacao,UsuarioPrimario,Fabricante,Modelo,Serial,Categoria,Status,DataCompra,GarantiaAte,CentroCusto,Fornecedor';
-    const url = `${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items?$select=${fields}&$top=5000`;
+    const fields = 'Title,Hostname,NF,Localizacao,UsuarioPrimarioId,UsuarioPrimario/Title,Fabricante,Modelo,Serial,Categoria,Status,DataCompra,GarantiaAte,CentroCusto,Fornecedor';
+    const url = `${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items?$select=${fields}&$expand=UsuarioPrimario&$top=5000`;
     const r = await fetch(url, { headers: { Accept: 'application/json;odata=nometadata', Authorization: `Bearer ${token}` } });
     if (r.status === 401) { token = await getToken(); return loadData(); }
     if (!r.ok) {
@@ -214,7 +214,7 @@ async function loadData() {
       hostname:    d.Hostname||'',
       nf:          d.NF||'',
       localizacao: d.Localizacao||'',
-      usuario:     d.UsuarioPrimario||'—',
+      usuario:     d.UsuarioPrimario?.Title || '—',
       fabricante:  d.Fabricante||'',
       modelo:      d.Modelo||'',
       serial:      d.Serial||'',
