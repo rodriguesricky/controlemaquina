@@ -200,8 +200,7 @@ async function loadData() {
   if (!token) return;
   showLoading('Carregando dados do SharePoint...');
   try {
-    const fields = 'Title,Hostname,NF,Localizacao,UsuarioPrimarioId,UsuarioPrimario/Title,Fabricante,Modelo,Serial,Categoria,Status,DataCompra,GarantiaAte,CentroCusto,Fornecedor';
-    const url = `${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items?$select=${fields}&$expand=UsuarioPrimario&$top=5000`;
+    const url = `${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items?$expand=UsuarioPrimario&$top=5000`;
     const r = await fetch(url, { headers: { Accept: 'application/json;odata=nometadata', Authorization: `Bearer ${token}` } });
     if (r.status === 401) { token = await getToken(); return loadData(); }
     if (!r.ok) {
@@ -209,6 +208,7 @@ async function loadData() {
       throw new Error(`HTTP ${r.status} — ${r.statusText}\n${body.substring(0,300)}`);
     }
     const data = await r.json();
+    if (data.value?.length > 0) console.log('Campos disponíveis:', Object.keys(data.value[0]));
     allDevices = (data.value||[]).map(d => ({
       title:       d.Title||'',
       hostname:    d.Hostname||'',
