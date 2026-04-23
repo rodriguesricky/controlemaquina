@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Controle Máquinas — Portofino</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --surface: #ffffff;
+    --surface2: #f0efeb;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.16);
+    --text: #1a1a18;
+    --muted: #6b6b67;
+    --hint: #9a9a95;
+    --accent: #D85A30;
+    --blue: #185FA5;
+    --blue-bg: #E6F1FB;
+    --green: #3B6D11; --green-bg: #EAF3DE;
+    --amber: #854F0B; --amber-bg: #FAEEDA;
+    --red: #A32D2D;   --red-bg: #FCEBEB;
+    --gray: #5F5E5A;  --gray-bg: #F1EFE8;
+    --radius: 10px; --radius-sm: 6px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18; --surface: #242422; --surface2: #2e2e2b;
+      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+      --text: #f0efe9; --muted: #9a9a95; --hint: #6b6b67;
+      --blue: #B5D4F4; --blue-bg: #0C447C;
+      --green: #C0DD97; --green-bg: #27500A;
+      --amber: #FAC775; --amber-bg: #633806;
+      --red: #F7C1C1;   --red-bg: #791F1F;
+      --gray: #D3D1C7;  --gray-bg: #444441;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 34px; height: 34px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+  .header h1 { font-size: 15px; font-weight: 600; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--surface); color: var(--text); cursor: pointer; transition: background 0.15s; }
+  .btn:hover { background: var(--surface2); }
+  .btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .btn-primary { background: #0078d4; border-color: #0078d4; color: #fff; }
+  .btn-primary:hover { background: #106ebe; }
+  .last-update { font-size: 11px; color: var(--hint); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  /* MAIN */
+  .main { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
+
+  /* STATE BOXES */
+  .state-box { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 5rem 2rem; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); text-align: center; }
+  .state-box h2 { font-size: 17px; font-weight: 600; }
+  .state-box p { font-size: 13px; color: var(--muted); line-height: 1.7; max-width: 380px; }
+  .spinner { width: 30px; height: 30px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .steps-box { background: var(--surface2); border-radius: var(--radius-sm); padding: 16px 20px; text-align: left; margin-top: 4px; }
+  .steps-box p { font-size: 12px; color: var(--muted); line-height: 1.9; }
+  .steps-box strong { color: var(--text); }
+  .ms-logo { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* METRICS */
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 1.25rem; }
+  .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 15px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; user-select: none; }
+  .metric:hover { border-color: var(--border2); }
+  .metric.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(216,90,48,0.12); }
+  .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+  .metric-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .metric-value { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; }
+
+  /* FILTERS */
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.25rem; }
+  .filters input, .filters select { font-size: 13px; padding: 7px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); outline: none; transition: border-color 0.15s; }
+  .filters input:focus, .filters select:focus { border-color: var(--accent); }
+  .filters input { flex: 1; min-width: 200px; }
+
+  /* CHARTS */
+  .charts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 1.25rem; }
+  @media (max-width: 860px) { .charts { grid-template-columns: 1fr; } }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .card-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--hint); margin-bottom: 12px; }
+
+  /* GARANTIA */
+  .garantia-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .garantia-item:last-child { border-bottom: none; }
+  .garantia-host { font-size: 12px; font-weight: 600; }
+  .garantia-date { font-size: 10px; color: var(--hint); margin-top: 1px; }
+
+  /* TABLE */
+  .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .table-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--hint); }
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 980px; }
+  thead th { background: var(--surface2); color: var(--hint); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 13px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 9px 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .mono { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: 11px; }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .b-green { background: var(--green-bg); color: var(--green); }
+  .b-amber { background: var(--amber-bg); color: var(--amber); }
+  .b-red   { background: var(--red-bg);   color: var(--red); }
+  .b-blue  { background: var(--blue-bg);  color: var(--blue); }
+  .b-gray  { background: var(--gray-bg);  color: var(--gray); }
+  .empty { text-align: center; padding: 3rem; color: var(--hint); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">CM</div>
+    <h1>Controle Máquinas</h1>
+  </div>
+  <div class="header-right">
+    <span class="last-update" id="last-update"></span>
+    <button class="btn" onclick="loadData()" id="btn-refresh" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2" stroke-linecap="round"/>
+        <path d="M12 2v3h-3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Atualizar
+    </button>
+  </div>
+</div>
+
+<div class="main" id="main"></div>
+
+<script src="msal.js"></script>
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────
+// IMPORTANTE: substitua CLIENT_ID pelo App ID registrado no Azure AD
+const CONFIG = {
+  clientId:  '7f9a8e42-fea2-497a-9762-7892027f1560',
+  authority: 'https://login.microsoftonline.com/common',
+  redirectUri: 'https://rodriguesricky.github.io/controlemaquina',
+  siteUrl:   'https://portofinomultifamilyoffice.sharepoint.com/sites/controlemaquinas',
+  listName:  'Controle',
+  scopes:    ['https://portofinomultifamilyoffice.sharepoint.com/AllSites.Read'],
+};
+
+const statusMeta = {
+  'Em uso':          { dot:'#639922', cls:'b-green' },
+  'Ativo':           { dot:'#639922', cls:'b-green' },
+  'Aguardando':      { dot:'#888780', cls:'b-gray'  },
+  'Offline':         { dot:'#E24B4A', cls:'b-red'   },
+  'Manutenção':      { dot:'#378ADD', cls:'b-blue'  },
+  'Em Manutenção':   { dot:'#378ADD', cls:'b-blue'  },
+  'Parado':          { dot:'#BA7517', cls:'b-amber' },
+  'Descomissionado': { dot:'#B4B2A9', cls:'b-gray'  },
+};
+
+let token = null, allDevices = [], activeStatus = null;
+let chartS = null, chartL = null;
+let msalInstance = null;
+
+// ── MSAL ────────────────────────────────────────────────────────────
+function loadMSAL() { return Promise.resolve(); }
+
+async function getToken() {
+  await loadMSAL();
+  if (!msalInstance) {
+    msalInstance = new msal.PublicClientApplication({
+      auth: { clientId: CONFIG.clientId, authority: CONFIG.authority, redirectUri: CONFIG.redirectUri },
+      cache: { cacheLocation: 'sessionStorage' }
+    });
+    await msalInstance.initialize();
+  }
+  const req = { scopes: CONFIG.scopes };
+  try {
+    const acct = msalInstance.getAllAccounts()[0];
+    if (acct) return (await msalInstance.acquireTokenSilent({ ...req, account: acct })).accessToken;
+  } catch {}
+  const resp = await msalInstance.loginPopup(req);
+  return (await msalInstance.acquireTokenSilent({ ...req, account: resp.account })).accessToken;
+}
+
+// ── LOGIN ───────────────────────────────────────────────────────────
+async function login() {
+  showLoading('Conectando ao Microsoft 365...');
+  try {
+    token = await getToken();
+    document.getElementById('btn-refresh').style.display = 'inline-flex';
+    await loadData();
+  } catch(e) { showError(e); }
+}
+
+// ── DATA ────────────────────────────────────────────────────────────
+async function loadData() {
+  if (!token) return;
+  showLoading('Carregando dados do SharePoint...');
+  try {
+    const fields = 'Title,Hostname,NF,Localizacao,UsuarioPrimario,Fabricante,Modelo,Serial,Categoria,Status,DataCompra,GarantiaAte,CentroCusto,Fornecedor';
+    const url = `${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items?$select=${fields}&$top=5000`;
+    const r = await fetch(url, { headers: { Accept: 'application/json;odata=nometadata', Authorization: `Bearer ${token}` } });
+    if (r.status === 401) { token = await getToken(); return loadData(); }
+    if (!r.ok) throw new Error(`HTTP ${r.status} — ${r.statusText}`);
+    const data = await r.json();
+    allDevices = (data.value||[]).map(d => ({
+      title:       d.Title||'',
+      hostname:    d.Hostname||'',
+      nf:          d.NF||'',
+      localizacao: d.Localizacao||'',
+      usuario:     d.UsuarioPrimario||'—',
+      fabricante:  d.Fabricante||'',
+      modelo:      d.Modelo||'',
+      serial:      d.Serial||'',
+      categoria:   d.Categoria||'',
+      status:      d.Status||'',
+      dataCompra:  d.DataCompra  ? d.DataCompra.substring(0,10)  : '',
+      garantiaAte: d.GarantiaAte ? d.GarantiaAte.substring(0,10) : '',
+      centroCusto: d.CentroCusto||'',
+      fornecedor:  d.Fornecedor||'',
+    }));
+    document.getElementById('last-update').textContent = 'Atualizado: ' + new Date().toLocaleTimeString('pt-BR');
+    renderDashboard();
+  } catch(e) { showError(e); }
+}
+
+// ── STATE ───────────────────────────────────────────────────────────
+function showLoading(msg) {
+  document.getElementById('main').innerHTML = `<div class="state-box"><div class="spinner"></div><p>${msg}</p></div>`;
+}
+
+function showError(e) {
+  document.getElementById('main').innerHTML = `<div class="state-box">
+    <div style="font-size:32px">⚠️</div>
+    <h2>Erro ao conectar</h2>
+    <p>${e.message||e}<br><br>Certifique-se de estar logado com a conta corporativa da Portofino e que o App ID do Azure AD está configurado corretamente.</p>
+    <button class="btn btn-primary" onclick="login()">Tentar novamente</button>
+  </div>`;
+}
+
+// ── RENDER ──────────────────────────────────────────────────────────
+const today = new Date();
+const daysUntil = s => s ? Math.round((new Date(s) - today) / 86400000) : 9999;
+const badgeCls  = s => (statusMeta[s]||{cls:'b-gray'}).cls;
+const dotColor  = s => (statusMeta[s]||{dot:'#888'}).dot;
+const unique    = k => [...new Set(allDevices.map(d=>d[k]).filter(Boolean))].sort();
+
+function getFiltered() {
+  const q   = (document.getElementById('f-search')?.value||'').toLowerCase();
+  const loc = document.getElementById('f-loc')?.value||'';
+  const fab = document.getElementById('f-fab')?.value||'';
+  const cat = document.getElementById('f-cat')?.value||'';
+  const cc  = document.getElementById('f-cc')?.value||'';
+  return allDevices.filter(d =>
+    (!activeStatus || d.status === activeStatus) &&
+    (!loc || d.localizacao === loc) &&
+    (!fab || d.fabricante  === fab) &&
+    (!cat || d.categoria   === cat) &&
+    (!cc  || d.centroCusto === cc)  &&
+    (!q   || [d.hostname,d.usuario,d.serial,d.title,d.modelo].some(v=>v.toLowerCase().includes(q)))
+  );
+}
+
+function renderDashboard() {
+  document.getElementById('main').innerHTML = `
+    <div id="metrics" class="metrics"></div>
+    <div class="filters">
+      <input id="f-search" type="text" placeholder="Buscar hostname, usuário, serial, modelo..." oninput="rerender()" />
+      <select id="f-loc" onchange="rerender()"><option value="">Todas as localizações</option>${unique('localizacao').map(v=>`<option>${v}</option>`).join('')}</select>
+      <select id="f-fab" onchange="rerender()"><option value="">Todos os fabricantes</option>${unique('fabricante').map(v=>`<option>${v}</option>`).join('')}</select>
+      <select id="f-cat" onchange="rerender()"><option value="">Todas as categorias</option>${unique('categoria').map(v=>`<option>${v}</option>`).join('')}</select>
+      <select id="f-cc"  onchange="rerender()"><option value="">Todos os centros de custo</option>${unique('centroCusto').map(v=>`<option>${v}</option>`).join('')}</select>
+    </div>
+    <div class="charts">
+      <div class="chart-card"><div class="card-title">Por status</div><div style="position:relative;height:175px"><canvas id="cS" role="img" aria-label="Distribuição por status"></canvas></div></div>
+      <div class="chart-card"><div class="card-title">Por localização</div><div style="position:relative;height:175px"><canvas id="cL" role="img" aria-label="Máquinas por localização"></canvas></div></div>
+      <div class="chart-card"><div class="card-title">Garantias a vencer (90 dias)</div><div id="garantia"></div></div>
+    </div>
+    <div class="table-header">
+      <span class="table-label">Inventário — <strong id="count">0</strong> máquinas</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:7%">Title</th>
+          <th style="width:9%">Hostname</th>
+          <th style="width:12%">Usuário</th>
+          <th style="width:10%">Localização</th>
+          <th style="width:9%">Fabricante</th>
+          <th style="width:10%">Modelo</th>
+          <th style="width:8%">Serial</th>
+          <th style="width:7%">Categoria</th>
+          <th style="width:8%">Centro custo</th>
+          <th style="width:7%">Data compra</th>
+          <th style="width:7%">Garantia até</th>
+          <th style="width:6%">Status</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>`;
+  rerender();
+}
+
+function rerender() {
+  renderMetrics(); renderGarantia();
+  const f = getFiltered(); renderTable(f); renderCharts(f);
+}
+
+function setStatus(s) { activeStatus = activeStatus === s ? null : s; rerender(); }
+
+function renderMetrics() {
+  const counts = {};
+  allDevices.forEach(d => counts[d.status] = (counts[d.status]||0)+1);
+  let h = `<div class="metric${!activeStatus?' active':''}" onclick="setStatus(null)">
+    <div class="metric-label">Total</div><div class="metric-value">${allDevices.length}</div></div>`;
+  Object.entries(counts).forEach(([s,c]) => {
+    h += `<div class="metric${activeStatus===s?' active':''}" onclick="setStatus('${s.replace(/'/g,"\\'")}')">
+      <div class="metric-label"><span class="metric-dot" style="background:${dotColor(s)}"></span>${s}</div>
+      <div class="metric-value">${c}</div></div>`;
+  });
+  document.getElementById('metrics').innerHTML = h;
+}
+
+function renderGarantia() {
+  const el = document.getElementById('garantia'); if (!el) return;
+  const exp = allDevices.map(d=>({...d,days:daysUntil(d.garantiaAte)}))
+    .filter(d=>d.days<=90&&d.days>-365).sort((a,b)=>a.days-b.days).slice(0,6);
+  if (!exp.length) { el.innerHTML=`<p style="font-size:12px;color:var(--hint);padding-top:6px">Nenhuma garantia expirando nos próximos 90 dias.</p>`; return; }
+  el.innerHTML = exp.map(d => {
+    const e = d.days<0;
+    return `<div class="garantia-item">
+      <div><div class="garantia-host">${d.hostname}</div><div class="garantia-date">${d.garantiaAte}</div></div>
+      <span class="badge ${e?'b-red':'b-amber'}">${e?`Expirou há ${Math.abs(d.days)}d`:`${d.days}d restantes`}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderCharts(f) {
+  const sc={};
+  f.forEach(d=>sc[d.status]=(sc[d.status]||0)+1);
+  const sk=Object.keys(sc);
+  if (chartS) chartS.destroy();
+  const csEl=document.getElementById('cS');
+  if (csEl) chartS=new Chart(csEl,{type:'doughnut',data:{labels:sk,datasets:[{data:Object.values(sc),backgroundColor:sk.map(k=>dotColor(k)),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:9,padding:8}}}}});
+
+  const lc={};
+  f.forEach(d=>lc[d.localizacao]=(lc[d.localizacao]||0)+1);
+  const ls=Object.entries(lc).sort((a,b)=>b[1]-a[1]);
+  if (chartL) chartL.destroy();
+  const clEl=document.getElementById('cL');
+  if (clEl) chartL=new Chart(clEl,{type:'bar',data:{labels:ls.map(s=>s[0]),datasets:[{data:ls.map(s=>s[1]),backgroundColor:'#D85A30',borderRadius:3,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10},stepSize:1}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+}
+
+function renderTable(f) {
+  const el=document.getElementById('count'); if(el) el.textContent=f.length;
+  const tb=document.getElementById('tbody'); if(!tb) return;
+  if(!f.length){tb.innerHTML=`<tr><td colspan="12" class="empty">Nenhuma máquina encontrada.</td></tr>`;return;}
+  tb.innerHTML=f.map(d=>{
+    const days=daysUntil(d.garantiaAte);
+    const gc=days<0?'b-red':days<=90?'b-amber':'';
+    const gv=d.garantiaAte?(gc?`<span class="badge ${gc}">${d.garantiaAte}</span>`:d.garantiaAte):'—';
+    return `<tr>
+      <td style="font-weight:600">${d.title}</td>
+      <td class="mono">${d.hostname}</td>
+      <td style="color:var(--muted)">${d.usuario}</td>
+      <td>${d.localizacao}</td>
+      <td style="color:var(--muted)">${d.fabricante}</td>
+      <td style="color:var(--muted)">${d.modelo}</td>
+      <td class="mono" style="color:var(--hint)">${d.serial}</td>
+      <td>${d.categoria}</td>
+      <td>${d.centroCusto}</td>
+      <td style="color:var(--hint)">${d.dataCompra||'—'}</td>
+      <td>${gv}</td>
+      <td><span class="badge ${badgeCls(d.status)}">${d.status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── INIT ────────────────────────────────────────────────────────────
+document.getElementById('main').innerHTML = `<div class="state-box">
+  <div style="font-size:40px">💻</div>
+  <h2>Controle Máquinas — Portofino</h2>
+  <p>Clique abaixo para entrar com sua conta Microsoft e carregar os dados da lista do SharePoint.</p>
+  <button class="btn btn-primary" onclick="login()">
+    <svg class="ms-logo" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+      <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+      <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+      <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+    </svg>
+    Entrar com Microsoft
+  </button>
+  <div class="steps-box">
+    <p>
+      <strong>Como funciona:</strong><br>
+      1. Clique em "Entrar com Microsoft"<br>
+      2. Faça login com sua conta corporativa da Portofino<br>
+      3. Os dados são carregados direto do SharePoint<br>
+      4. Nenhuma senha é armazenada — usa o token do Microsoft 365
+    </p>
+  </div>
+</div>`;
+</script>
+</body>
+</html>
