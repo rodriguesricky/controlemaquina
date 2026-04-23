@@ -146,7 +146,7 @@ const CONFIG = {
   redirectUri: 'https://rodriguesricky.github.io/controlemaquina',
   siteUrl:   'https://portofinomultifamilyoffice.sharepoint.com/sites/controlemaquinas',
   listName:  'Controle',
-  scopes:    ['https://portofinomultifamilyoffice.sharepoint.com/Sites.Read.All'],
+  scopes:    ['https://portofinomultifamilyoffice.sharepoint.com/AllSites.Read'],
 };
 
 const statusMeta = {
@@ -204,7 +204,10 @@ async function loadData() {
     const url = `${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items?$select=${fields}&$top=5000`;
     const r = await fetch(url, { headers: { Accept: 'application/json;odata=nometadata', Authorization: `Bearer ${token}` } });
     if (r.status === 401) { token = await getToken(); return loadData(); }
-    if (!r.ok) throw new Error(`HTTP ${r.status} — ${r.statusText}`);
+    if (!r.ok) {
+      const body = await r.text().catch(() => '');
+      throw new Error(`HTTP ${r.status} — ${r.statusText}\n${body.substring(0,300)}`);
+    }
     const data = await r.json();
     allDevices = (data.value||[]).map(d => ({
       title:       d.Title||'',
