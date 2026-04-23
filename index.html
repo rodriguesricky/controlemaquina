@@ -200,7 +200,7 @@ async function loadData() {
   if (!token) return;
   showLoading('Carregando dados do SharePoint...');
   try {
-    const url = `${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items?$expand=UsuarioPrimario&$top=5000`;
+    const url = `${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items?$select=Title,AssetID,NF,Localizacao,UsuarioPrimario/Title,Fabricante,Modelo,Serial,Categoria,Status,DataCompra,GarantiaAte,CentroCusto,Fornecedor,Observacoes&$expand=UsuarioPrimario&$top=5000`;
     const r = await fetch(url, { headers: { Accept: 'application/json;odata=nometadata', Authorization: `Bearer ${token}` } });
     if (r.status === 401) { token = await getToken(); return loadData(); }
     if (!r.ok) {
@@ -211,7 +211,7 @@ async function loadData() {
     if (data.value?.length > 0) console.log('Campos disponíveis:', Object.keys(data.value[0]));
     allDevices = (data.value||[]).map(d => ({
       title:       d.Title||'',
-      hostname:    d.Hostname||'',
+      hostname:    d.AssetID||'',
       nf:          d.NF||'',
       localizacao: d.Localizacao||'',
       usuario:     d.UsuarioPrimario?.Title || '—',
@@ -224,6 +224,7 @@ async function loadData() {
       garantiaAte: d.GarantiaAte ? d.GarantiaAte.substring(0,10) : '',
       centroCusto: d.CentroCusto||'',
       fornecedor:  d.Fornecedor||'',
+      observacoes: d.Observacoes||'',
     }));
     document.getElementById('last-update').textContent = 'Atualizado: ' + new Date().toLocaleTimeString('pt-BR');
     renderDashboard();
